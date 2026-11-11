@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clippa | Brandon Young</title>
+<meta name="description" content="A pipeline that turns long livestreams into reviewed, captioned, scheduled YouTube videos and Shorts: how it works, what it costs, and the decisions behind it.">
+<meta property="og:title" content="Clippa: livestreams in, reviewed YouTube videos out">
+<meta property="og:description" content="A pipeline that turns long livestreams into reviewed, captioned, scheduled YouTube videos and Shorts: how it works, what it costs, and the decisions behind it.">
+<meta property="og:image" content="https://byvfx.github.io/clippa/og.png">
+<meta property="og:url" content="https://byvfx.github.io/clippa/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23161616'/%3E%3Crect x='6.5' y='6.5' width='19' height='19' fill='none' stroke='%23e3b45f' stroke-width='3' stroke-dasharray='5 3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~70ch) with full-width bands for the timeline hero,
+   the pipeline and the architecture map. Timecode amber marks anything measured in time. */
+:root {
+  --bg: #f2f4f6;
+  --surface: #ffffff;
+  --ink: #15202b;
+  --muted: #56636f;
+  --line: #d5dce2;
+  --accent: #1d6a86;
+  --accent-soft: #dcebf1;
+  --tc: #a86a0c;
+  --tc-soft: #f6ead6;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --step--1: 0.84rem;
+  --step-0: 1rem;
+  --step-1: 1.2rem;
+  --step-2: 1.55rem;
+  --step-3: 2.1rem;
+  --step-4: clamp(2.4rem, 6vw, 3.6rem);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --surface: #17202a; --ink: #e6ecf1; --muted: #9aa8b4; --line: #2a3742;
+    --accent: #6cb8d4; --accent-soft: #1b3341; --tc: #e2a94a; --tc-soft: #3a2c15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #17202a; --ink: #e6ecf1; --muted: #9aa8b4; --line: #2a3742;
+  --accent: #6cb8d4; --accent-soft: #1b3341; --tc: #e2a94a; --tc-soft: #3a2c15;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: var(--step-0); line-height: 1.6; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: var(--step-4); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: var(--step-1); font-weight: 700; }
+p { margin: 0; }
+code, .mono { font-family: var(--mono); font-size: 0.9em; }
+code { background: var(--accent-soft); color: var(--ink); padding: 0.05em 0.35em; border-radius: 4px; }
+a { color: var(--accent); }
+.eyebrow { font-family: var(--mono); font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+section { padding-block: 56px; border-top: 1px solid var(--line); }
+.stack { display: grid; gap: 18px; }
+.stack-lg { display: grid; gap: 32px; }
+
+/* Hero */
+header { padding-block: 56px 40px; }
+.lede { font-size: var(--step-1); color: var(--muted); max-width: 60ch; }
+.byline { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: var(--step--1); }
+.byline strong { color: var(--ink); font-weight: 600; }
+
+/* The stream timeline */
+.timeline { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 12px; }
+.tl-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-family: var(--mono); font-size: var(--step--1); color: var(--muted); }
+.tl-bar { position: relative; height: 54px; border-radius: 6px; overflow: hidden; background: var(--accent-soft); }
+.tl-bar canvas { width: 100%; height: 100%; display: block; }
+.tl-ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.72rem; color: var(--tc); font-variant-numeric: tabular-nums; }
+.tl-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: var(--step--1); color: var(--muted); }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+
+/* Figures */
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.fig { background: var(--surface); padding: 18px; display: grid; gap: 4px; align-content: start; }
+.fig b { font-family: var(--display); font-size: var(--step-3); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.fig span { color: var(--muted); font-size: var(--step--1); line-height: 1.4; }
+@media (max-width: 720px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Pipeline */
+.pipe { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; counter-reset: st; }
+.pipe li { counter-increment: st; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.pipe li::before { content: counter(st, decimal-leading-zero); font-family: var(--mono); font-size: 0.75rem; color: var(--tc); }
+.pipe .cmd { font-family: var(--mono); font-size: 0.86rem; color: var(--accent); font-weight: 500; }
+.pipe p { font-size: 0.92rem; color: var(--muted); line-height: 1.5; }
+.pipe .where { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.pipe li.fast { border-color: var(--tc); }
+.note { font-size: var(--step--1); color: var(--muted); }
+
+/* Architecture */
+.arch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 820px) { .arch { grid-template-columns: minmax(0, 1fr); } }
+.zone { border: 1px dashed var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.zone h3 { font-size: var(--step-0); }
+.zone .eyebrow { font-size: 0.72rem; }
+.node { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: grid; gap: 2px; }
+.node b { font-weight: 600; font-size: 0.95rem; }
+.node span { font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
+.flows { display: grid; gap: 6px; font-size: 0.92rem; }
+.flows div { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: baseline; padding-block: 6px; border-bottom: 1px solid var(--line); }
+.flows div:last-child { border-bottom: 0; }
+.flows .arrow { font-family: var(--mono); color: var(--tc); }
+.flows .to { text-align: left; }
+.flows .from { text-align: right; }
+@media (max-width: 560px) { .flows div { grid-template-columns: minmax(0, 1fr); gap: 0; } .flows .from, .flows .to { text-align: left; } .flows .arrow { display: none; } .flows .to::before { content: "→ "; color: var(--tc); font-family: var(--mono); } }
+
+/* Decisions */
+.decisions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 40px; }
+@media (max-width: 760px) { .decisions { grid-template-columns: minmax(0, 1fr); } }
+.dec { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.dec p { color: var(--ink); }
+.dec .why { color: var(--muted); font-size: 0.94rem; }
+
+/* Bug story */
+.story { background: var(--tc-soft); border-radius: 10px; padding: 24px; display: grid; gap: 12px; }
+.story .eyebrow { color: var(--tc); }
+.story .why, .dec .why { color: var(--muted); font-size: 0.94rem; }
+.dec .mono.note { color: var(--accent); }
+
+/* Review flow strip: a real sequence, left to right */
+.flowline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.fl-step { padding: 16px 18px; display: grid; gap: 4px; align-content: start; border-right: 1px solid var(--line); position: relative; min-width: 0; }
+.fl-step:last-child { border-right: 0; }
+.fl-step:not(:last-child)::after { content: "→"; position: absolute; right: -0.55em; top: 16px; font-family: var(--mono); color: var(--tc); background: var(--surface); line-height: 1; z-index: 1; }
+.fl-step b { font-weight: 600; font-size: 0.95rem; line-height: 1.35; }
+.fl-step span:last-child { font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
+.fl-step.alt { background: var(--tc-soft); }
+.fl-step.alt .eyebrow { color: var(--tc); }
+@media (max-width: 760px) {
+  .flowline { grid-template-columns: minmax(0, 1fr); }
+  .fl-step { border-right: 0; border-bottom: 1px solid var(--line); }
+  .fl-step:last-child { border-bottom: 0; }
+  .fl-step:not(:last-child)::after { content: "↓"; right: 18px; top: auto; bottom: -0.6em; }
+}
+kbd { font-family: var(--mono); font-size: 0.8rem; font-weight: 500; padding: 0.1em 0.45em; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; background: var(--bg); color: var(--ink); }
+
+/* Stack */
+.stack-list { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 24px; margin: 0; }
+.stack-list dt { font-family: var(--mono); font-size: var(--step--1); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding-top: 2px; }
+.stack-list dd { margin: 0; }
+@media (max-width: 560px) { .stack-list { grid-template-columns: minmax(0, 1fr); gap: 2px; } .stack-list dd { margin-bottom: 12px; } }
+
+ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; }
+footer { padding-block: 40px 64px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--step--1); }
+
+/* Site nav, above the case study */
+:root { color-scheme: light; }
+body { margin: 0; }
+img { max-width: 100%; }
+.topnav { display: flex; justify-content: space-between; gap: 16px; padding-top: 20px; font-family: var(--mono); font-size: var(--step--1); }
+.topnav a { color: var(--muted); text-decoration: none; }
+.topnav a:hover { color: var(--accent); }
+.topnav span { display: flex; gap: 20px; }
+</style>
+</head>
+<body>
+
+<nav class="wrap topnav" aria-label="Site">
+  <a href="/">Brandon Young</a>
+  <span><a href="https://github.com/byvfx/clipper">GitHub</a><a href="https://github.com/byvfx/clipper/wiki">Docs</a></span>
+</nav>
+
+<div class="wrap">
+  <header class="stack-lg">
+    <div class="stack">
+      <div class="eyebrow">Case study · media automation · 2026</div>
+      <h1>Clippa</h1>
+      <p class="lede">A pipeline that turns long livestreams into reviewed, captioned, scheduled YouTube videos and Shorts. It records, transcribes, finds the moments worth keeping, cuts them, writes titles and cover art, sends everything to a person for approval, and uploads on a schedule.</p>
+      <div class="byline"><span><strong>Brandon Young</strong>, design and engineering</span><span>Solo project, built Oct–Nov 2026</span><span>Python · runs unattended on a home NAS and the cloud</span><span>MIT licensed · command: <code>clipper</code></span></div>
+    </div>
+
+    <div class="timeline" aria-label="Illustration of one eight-hour stream with the moments Clipper picks out">
+      <div class="tl-head"><span>One stream, 8 h of video</span><span>chat activity, loudness, and the picks</span></div>
+      <div class="tl-bar"><canvas id="tl" aria-hidden="true"></canvas></div>
+      <div class="tl-ticks"><span>00:00:00</span><span>02:00:00</span><span>04:00:00</span><span>06:00:00</span><span>08:00:00</span></div>
+      <div class="tl-legend">
+        <span><i class="sw" style="background:var(--accent)"></i>Signal heat (chat rate + loudness)</span>
+        <span><i class="sw" style="background:var(--tc)"></i>Picks: Shorts and clips</span>
+        <span><i class="sw" style="background:var(--muted)"></i>Topic segments</span>
+      </div>
+    </div>
+
+    <div class="figures">
+      <div class="fig"><b>306</b><span>videos published to YouTube since mid-October: 190 segments, 101 Shorts, 11 compilations</span></div>
+      <div class="fig"><b>~$3.50</b><span>for a full run on an 8-hour stream, transcription included (median of 27 streams)</span></div>
+      <div class="fig"><b>2,732 h</b><span>of a video archive transcribed and indexed for full-text search</span></div>
+      <div class="fig"><b>694</b><span>offline tests, run with lint in CI on Linux and Windows on every push</span></div>
+    </div>
+  </header>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">The problem</div>
+      <h2>Hours of footage, a few minutes worth keeping</h2>
+      <p>A live show runs four to ten hours, several nights a week. The good parts are scattered through it: a two-minute rant, a twenty-minute topic, a ten-second line that works as a Short. Finding and cutting them by hand takes longer than the show itself, and the channel needs a steady flow of uploads that read as if a person wrote them.</p>
+      <p>Clipper does the finding, cutting and packaging automatically and leaves one decision to people: whether each piece goes out. Every item arrives in review with its video, title, description, chapters and cover. A reviewer approves it, rejects it, or leaves a note, and a note triggers a re-cut.</p>
+    </div>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">Pipeline</div>
+      <h2>Thirteen stages, each one command</h2>
+      <p>Every stage is a <code>clipper &lt;stage&gt;</code> subcommand that reads and writes files in the stream's folder. The stages are idempotent, so <code>clipper run</code> resumes after a crash, skips finished work, and can redo from any stage with <code>--from</code>. One table in the code lists the stages, and the worker, the CLI and the web dashboard all read from it.</p>
+    </div>
+    <ol class="pipe">
+      <li><span class="cmd">record / fetch</span><p>A Docker recorder on the NAS watches channels and captures each live show with its chat. Past broadcasts can be fetched instead.</p><span class="where">NAS</span></li>
+      <li class="fast"><span class="cmd">transcribe</span><p>WhisperX with word timings and speaker labels, on a cloud GPU. About $0.45 a stream.</p><span class="where">Modal L40S</span></li>
+      <li class="fast"><span class="cmd">signals</span><p>Chat rate and audio loudness over time: a heat map of where the audience reacted.</p><span class="where">Worker</span></li>
+      <li class="fast"><span class="cmd">score</span><p>Two passes. A fast model reads the whole transcript with the heat map; a stronger model judges only the shortlist.</p><span class="where">LLM</span></li>
+      <li class="fast"><span class="cmd">segments</span><p>Splits the stream into topics, and groups recurring topics across nights into compilations.</p><span class="where">LLM</span></li>
+      <li class="fast"><span class="cmd">cut</span><p>Lossless segment cuts on keyframes, re-encoded picks, and automatic bleeps for listed words in audio and captions.</p><span class="where">NAS ffmpeg</span></li>
+      <li class="fast"><span class="cmd">meta</span><p>Search-friendly title, description, chapters, tags and an .srt caption file, following a house style.</p><span class="where">LLM</span></li>
+      <li class="fast"><span class="cmd">thumbs</span><p>Cover art in each show's style. Faces are placed so they never sit under overlays.</p><span class="where">LLM + Pillow</span></li>
+      <li class="fast"><span class="cmd">shorts</span><p>Vertical 15–59 s versions. A vision model picks a layout for each scene and switches at every cut. Dead air between words is trimmed, but only where the audio is quiet too, so a laugh stays.</p><span class="where">Worker</span></li>
+      <li><span class="cmd">faces</span><p>Who is on screen, with local CPU face detection and recognition (YuNet + SFace).</p><span class="where">Worker</span></li>
+      <li><span class="cmd">review</span><p>Publishes everything to Kitsu, the review system of record, and posts cards with approve buttons to Discord.</p><span class="where">Kitsu · Discord</span></li>
+      <li><span class="cmd">schedule</span><p>Fills daily slots by type, mixes shows, drops anything stale, and respects the per-day upload limit.</p><span class="where">Serve</span></li>
+      <li><span class="cmd">upload</span><p>Private with a publish time, then playlists and source links. Runs every hour without anyone starting it.</p><span class="where">YouTube API</span></li>
+    </ol>
+    <p class="note col"><span class="sw" style="background:var(--tc)"></span>Outlined stages make up the fast lane: picks and Shorts reach review hours before the long segments are cut.</p>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">Architecture</div>
+      <h2>One home NAS and a few cloud APIs</h2>
+      <p>The work goes where it is cheapest. Everything that runs all the time lives on a home NAS in Docker, next to the footage: the recorder, the review tracker, and the services that run the pipeline, the war room and the bot. Video is cut and encoded there with the NAS's own Intel GPU, so hours of footage never cross the network. Only GPU transcription goes out, to Modal, billed by the second.</p>
+      <p>The config and all state sit in one folder on the NAS, so there is a single copy. Every service writes a heartbeat file, and the war room reaches a phone over Tailscale. No other computer has to be on. The same services can also run on a Windows machine as scheduled tasks, and the old laptop setup is kept, switched off, as a rollback.</p>
+      <p>A new machine is set up by role: GPU worker, serve, bot, recorder, Claude, or a control station that runs nothing unattended. <code>clipper setup</code> writes that machine's config, and <code>clipper doctor --role …</code> checks exactly what that role needs. A Mac on Apple Silicon is set up as a control station.</p>
+    </div>
+    <div class="arch">
+      <div class="zone">
+        <div class="eyebrow">NAS · Docker</div>
+        <h3>Capture, review and operator</h3>
+        <div class="node"><b>Recorder</b><span>Watches live channels, records video and chat, alerts Discord when a show starts or a recording fails. Refuses a redeploy while a show is live.</span></div>
+        <div class="node"><b>Kitsu</b><span>Production tracker used as the review record: one production per show.</span></div>
+        <div class="node"><b>Shared folder</b><span>Streams, config, schedule, logs, faces, archives: one copy, read by every container.</span></div>
+        <div class="node"><b>Claude Code</b><span>Its own container and clone of the repo, driven from the Claude app on a phone. It can run stages, read logs, and change code on a branch and open a PR. It can't restart or deploy the services.</span></div>
+      </div>
+      <div class="zone">
+        <div class="eyebrow">NAS · clipper-hub containers</div>
+        <h3>Always-on services</h3>
+        <div class="node"><b>serve</b><span>The war room, hourly replan and upload, daily jobs, retakes.</span></div>
+        <div class="node"><b>bot</b><span>Discord review cards, buttons and DMs. Asks serve to replan after a decision.</span></div>
+        <div class="node"><b>worker</b><span>Runs every stage on each finished recording, fast lane first, with hardware encoding (Intel Quick Sync).</span></div>
+        <div class="node"><b>tailscale</b><span>Puts the war room on a private network for phone access, with no ports opened to the internet.</span></div>
+      </div>
+      <div class="zone">
+        <div class="eyebrow">Cloud APIs</div>
+        <h3>Paid by use</h3>
+        <div class="node"><b>Modal</b><span>WhisperX on an L40S for live shows, cheaper L4s for archive bulk jobs.</span></div>
+        <div class="node"><b>LLMs</b><span>Claude Haiku, Sonnet and Opus by stage. Other providers through one interface.</span></div>
+        <div class="node"><b>YouTube · Discord · ElevenLabs</b><span>Uploads and analytics, review, and voice-over for narrated pieces.</span></div>
+      </div>
+    </div>
+    <div class="flows col" aria-label="Main data flows">
+      <div><span class="from">Recorder finishes a show</span><span class="arrow">→</span><span class="to">worker runs the stages</span></div>
+      <div><span class="from">Items ready for review</span><span class="arrow">→</span><span class="to">Kitsu + Discord cards</span></div>
+      <div><span class="from">Reviewer approves or leaves a note</span><span class="arrow">→</span><span class="to">serve replans, or re-cuts on a note</span></div>
+      <div><span class="from">Hourly tick</span><span class="arrow">→</span><span class="to">schedule, then upload to YouTube</span></div>
+    </div>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">Review</div>
+      <h2>Nothing goes out until a person says so</h2>
+      <p>Kitsu holds every decision, with one production per show and one episode per stream. The Discord bot mirrors each item as a card with buttons, so a reviewer can approve from a phone. The war room is the full review desk. All three act through the same code path, so a click in one place shows up in the other two.</p>
+    </div>
+
+    <div class="flowline" aria-label="Review flow">
+      <div class="fl-step"><span class="eyebrow">Arrives</span><b>Video, title, description, chapters, cover</b><span>in Kitsu, as a Discord card, and in the war room queue</span></div>
+      <div class="fl-step"><span class="eyebrow">Decide</span><b>Approve · reject · hold · note</b><span>from any of the three, with undo</span></div>
+      <div class="fl-step alt"><span class="eyebrow">A note</span><b>Becomes a retake</b><span>re-cut, re-trimmed or redrawn automatically, then back to review</span></div>
+      <div class="fl-step"><span class="eyebrow">Approved</span><b>Scheduled and uploaded</b><span>the next free slot on YouTube, and on X while the topic is hot</span></div>
+    </div>
+
+    <div class="decisions">
+      <div class="dec">
+        <h3>Guardrails before review</h3>
+        <p>Some items arrive already flagged. A Short with more than five seconds of voices that aren't the show's own (usually a video playing on stream) is held, and its card shows the seconds counted from the speaker labels. The reviewer releases it when the show's commentary carries the moment.</p>
+        <p class="why">The bot sends a DM when something needs a person: a stream ready for review, a failed upload, a stage that failed after its retries, recorder trouble, a filling disk. Quiet hours hold these until morning, and a daily digest arrives at 09:00.</p>
+      </div>
+      <div class="dec">
+        <h3>The war room</h3>
+        <p>A web page served by the always-on service, and installable on a phone over Tailscale. It shows what is live and whether it is recording, where each stream is in the pipeline, the review queue and the upload schedule, plus panels for GPU jobs, costs and analytics.</p>
+        <p class="why">It also opens the cast library, the news stories and the research dossiers, so all of the tools above have one place to work from.</p>
+        <p class="why">A usability pass made it safe to use quickly: a bulk approve touches only the items on screen (approved items upload on their own), a double tap sends once, and the header turns amber, then red, when its data goes stale.</p>
+      </div>
+    </div>
+
+    <div class="arch">
+      <div class="zone">
+        <div class="eyebrow">Review queue</div>
+        <h3>Built for the keyboard</h3>
+        <div class="node"><b><kbd>J</kbd> <kbd>K</kbd> <kbd>A</kbd> <kbd>R</kbd> <kbd>C</kbd> <kbd>H</kbd></b><span>Next, previous, approve, reject, retake note, hold. Space and the arrow keys play and seek.</span></div>
+        <div class="node"><b>Search everything</b><span>Titles, descriptions, topics, hashtags and what is said in each video. Filters live in the URL, so a view can be bookmarked.</span></div>
+        <div class="node"><b>Checked as you type</b><span>Length limits, unmasked swearing and words the channel avoids. Cards with a problem get a warning badge.</span></div>
+      </div>
+      <div class="zone">
+        <div class="eyebrow">Bulk and undo</div>
+        <h3>Safe to act on many</h3>
+        <div class="node"><b>Bulk actions</b><span>Approve, hold, pin, reopen or send one retake note to a whole selection.</span></div>
+        <div class="node"><b>Find and replace</b><span>Across titles, descriptions, tags and playlists, with a dry run that lists every line it would change.</span></div>
+        <div class="node"><b>Undo</b><span>Any action, single or bulk, from its toast for 10 s or from the last 20. Undo goes through Kitsu too.</span></div>
+      </div>
+      <div class="zone">
+        <div class="eyebrow">Editors</div>
+        <h3>Fix it without a model call</h3>
+        <div class="node"><b>Cover editor</b><span>Pick the frame and the inset, drag face boxes, swap in a cast photo by expression, change the words. Saving re-renders locally and re-attaches the cover in Kitsu.</span></div>
+        <div class="node"><b>Who's this?</b><span>Pause on a face, draw a box, and it says who it looks like. One click enrolls the face and names every look-alike in the stream.</span></div>
+        <div class="node"><b>Schedule</b><span>Drag an item onto an open slot to pin it. The page warns before a drop breaks the spacing rules.</span></div>
+      </div>
+    </div>
+
+    <div class="story">
+      <div class="eyebrow">Distribution · X</div>
+      <h3>Shorts on X, built around how X bills</h3>
+      <p>Approved Shorts go to X through the API as native video. Posting runs every hour and takes the newest streams from the last 72 hours first, up to six posts a day. It doesn't wait for YouTube, because a clip is worth most on X while the topic is still being talked about.</p>
+      <p class="why">X charges about $0.015 for a post and $0.20 for a post with a link, so Clipper never includes a link. The post text leads with the hook, since the feed shows only the first words. It then adds up to three hashtags and a credit line that tags whose footage it is. Tall videos are re-encoded to X's recommended 720×1280. The weekly issue goes out as a thread, four pages per post, and a thread that fails halfway picks up as replies to the last post. Each post's cost is logged with the model calls.</p>
+    </div>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">Design decisions</div>
+      <h2>What makes it hold up unattended</h2>
+    </div>
+    <div class="decisions">
+      <div class="dec">
+        <h3>People decide, in one place</h3>
+        <p>Every review action, whether a Discord button, a dashboard click or a Kitsu status, goes through one module and lands in Kitsu. There is no second database to fall out of sync.</p>
+        <p class="why">A note on an item ("start two seconds later", "wrong face on the cover") becomes an automatic retake: Clipper re-cuts or redraws that item and sends it back for review.</p>
+      </div>
+      <div class="dec">
+        <h3>Spend money only where it changes the answer</h3>
+        <p>A cheap model reads everything and a strong model judges the shortlist. Paid stages refuse to rerun without <code>--force</code>. Cut keeps picks whose in and out points haven't changed, and covers are kept while their cut is unchanged.</p>
+        <p class="why">Every paid stage takes <code>--dry-run</code>, which builds the prompts it would send and prints the estimated cost without calling anything. Every model call is logged with its token counts and price. <code>clipper costs</code> and the dashboard break spend down by stage, stream and provider.</p>
+      </div>
+      <div class="dec">
+        <h3>Models and prompts are swappable and versioned</h3>
+        <p>All model calls go through one layer, and the provider comes from the model string's prefix (Claude, OpenAI, Gemini, OpenRouter or local). Prompts are versioned files. A version that produced reviewed output is never edited; changes go into a new version.</p>
+        <p class="why"><code>clipper compare</code> runs candidate models against a gold set of past reviewer decisions before a stage switches models.</p>
+      </div>
+      <div class="dec">
+        <h3>One install, many shows</h3>
+        <p>Config is layered: code defaults, a shared file, this machine's own file, then environment variables. Each show gets its own table with cast, style, budgets and layouts, and a single stream can override anything.</p>
+        <p class="why">Adding a show is a config table and a Kitsu production, with no code changes. <code>clipper doctor</code> checks every dependency, key and service and prints the fix for each failure. <code>clipper setup</code> writes a new machine's config.</p>
+      </div>
+      <div class="dec">
+        <h3>State that survives crashes</h3>
+        <p>JSON state is written to a temp file, then swapped in. Updates take a lock, and readers retry when they catch a file mid-replace. Library code raises one error type with a one-line message, and only the CLI turns it into an exit.</p>
+        <p class="why">Tests enforce the conventions: a test fails on a raw JSON read or a stray <code>SystemExit</code>, on a broken docs link, or on a CLI command missing from its group.</p>
+      </div>
+      <div class="dec">
+        <h3>A schedule that stays current</h3>
+        <p>Uploads fill fixed daily slots by type (Shorts, segments, compilations), alternate between shows, and stay under the channel's daily limit. Approved items older than a few days drop out, so the channel never falls weeks behind the shows.</p>
+        <p class="why">The first version queued everything, and the newest stream ended up 15 days behind. Switching to "stay current" was a product decision, made from the data.</p>
+      </div>
+      <div class="dec">
+        <h3>Measure before switching models</h3>
+        <p><code>clipper compare</code> runs a candidate model or prompt on streams that people have already reviewed, and counts how many of the approved moments it finds and how many windows it keeps. Running the same prompt twice first sets a noise floor, so a change is adopted only when it beats that.</p>
+        <p class="why">Twelve models were tried through OpenRouter, with reasoning on and off. A newer restructured prompt found 8 of 18 approved moments against 6 for the previous one, but the gap is within the noise, so it stays a candidate. Every trial and its cost is written up on a wiki page.</p>
+      </div>
+      <div class="dec">
+        <h3>It checks on itself</h3>
+        <p><code>clipper checkup</code> reads only the files the services write: stale heartbeats, a stage stuck for hours, a recording nobody picked up, an upload late for its slot, a title over YouTube's limits. <code>clipper status</code> puts services, streams, review counts, the next releases and the month's spend on one screen.</p>
+        <p class="why">A nightly report is built on top of it. When nothing is wrong it sends a one-line DM with no model call. When something is wrong, Claude Code runs headless with read-only tools and sends one DM with its diagnosis. If that fails, the raw findings go out instead. A weekly digest covers runs, uploads, spend and review decisions, and once a month a read-only Claude pass reads those weeks to find the problems that keep coming back.</p>
+      </div>
+    </div>
+
+    <div class="story col">
+      <div class="eyebrow">A bug worth telling</div>
+      <h3>The compilation that repeated itself</h3>
+      <p>A reviewer noticed a speaker "repeating himself" two hours into a compilation. Lossless cuts have to start on a keyframe, so each segment file began up to five seconds before its real start. Joined back to back, every join replayed the tail of the previous part: 13 of 15 joins in that video.</p>
+      <p>The fix ends each part with a concat <code>outpoint</code> exactly where the next file begins. The cuts stay lossless and the joins are now frame-accurate. A regression test covers it.</p>
+    </div>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">Research and context</div>
+      <h2>Tools that know who is on screen and what is going on</h2>
+      <p>Clips are only as good as the context behind them. Four tools around the pipeline track the people in the shows, the news about them, and the stories the shows cover. They follow one rule: a model can find, sort and summarize, but every claim it makes has to point back to a real source. That means a quote that appears word for word in a transcript, a headline with its link, or a search result the code actually fetched. Output that can't be traced back is rejected.</p>
+    </div>
+
+    <div class="story">
+      <div class="eyebrow">Shared engine · search swarm</div>
+      <h3>Many small searches that follow their own leads</h3>
+      <p>A planner model turns a goal (a story brief or a lead) into up to 16 first searches. Cheaper worker models run eight at a time, each using one tool: YouTube, Kick or Odysee channels, Reddit and the web, past transcripts, or Clipper's own segments. Each worker marks the results that fit and suggests up to three follow-ups. A coordinator merges duplicates, queues the new follow-ups, and stops at a round, task, budget or time limit. The whole task tree is saved so a run can resume.</p>
+      <p class="why">A model never fetches anything directly. A finding has to be one of the tool's own results, a follow-up has to parse as a valid query or channel, and any search for a person's whereabouts or private details is dropped. In one 30-task run it found 109 results (44 strong) across five platforms for about $0.03.</p>
+    </div>
+
+    <div class="decisions">
+      <div class="dec">
+        <h3>Cast library</h3>
+        <span class="mono note">clipper cast</span>
+        <p>Keeps a set of head-and-shoulders photos of each regular for cover art. Photos come from the streams themselves, Wikimedia Commons, the person's own channels and image search. It fills itself: each new stream adds the sharpest frames of anyone still short of photos, and a daily job searches the other sources.</p>
+        <p class="why">Each photo has to match the person's enrolled face before it is kept, then gets a 4:5 crop and an expression label ("neutral", "laughing", "angry") for about $0.0002. Photos are kept automatically only from sources with a known origin, never from image search or photo agencies. Covers pick the photo whose expression fits the story.</p>
+      </div>
+      <div class="dec">
+        <h3>News watcher</h3>
+        <span class="mono note">clipper news</span>
+        <p>Watches headlines for the names you give it and posts new stories to Discord. One button adds a story to the context for the show's next stream, so scoring knows what the audience already knows. An hour before a show usually starts, it suggests that day's stories.</p>
+        <p class="why">A cheap model checks each headline: is it really about this person and not someone with the same name, is it new, and is it about public conduct. Stories about private people or anyone's children are never posted. Five outlets on one event become one story. Only headlines and links are stored, never the articles. A check costs well under a cent.</p>
+      </div>
+      <div class="dec">
+        <h3>Investigations</h3>
+        <span class="mono note">clipper investigate</span>
+        <p>Reads a public figure's own back catalog and comes back with leads: claims that changed over time, numbers that moved, things promised and never delivered, topics that suddenly took over. Then it checks whether anyone else has covered each lead.</p>
+        <p class="why">A model pulls checkable statements from each video, and a statement is kept only if its quote is in the transcript with the numbers and any "not" unchanged. Patterns are found in code with no model call, and a stronger model writes up or rejects each one. Rejections are kept with the reason. Every receipt links to the exact moment. Leads are research for a person, never posted automatically. A full multi-year catalog costs about $14, and later runs read only new uploads.</p>
+      </div>
+      <div class="dec">
+        <h3>Story dossiers</h3>
+        <span class="mono note">clipper story</span>
+        <p>Give it a one-line brief and a time window. The search swarm finds the videos, triage picks which ones are worth transcribing within an hour budget, and the result is a research dossier: summary, timeline, who said what, conflicts, gaps and angles. From there it plans an edit with chapters, lower thirds and every source credited, ready for review or as a narrated catch-up to watch yourself.</p>
+        <p class="why">The timeline marks each event as shown, reported or speculation. Every line cites a moment or a source. A citation that doesn't resolve is sent back once, and if it still doesn't resolve, the step fails. When a re-upload repeats an earlier part, the duplicate is dropped from the edit.</p>
+      </div>
+    </div>
+
+    <ul class="plain col">
+      <li><b>Archive search.</b> Thousands of hours of a back catalog transcribed in bulk on Modal and indexed with SQLite full-text search, so you can ask questions across years of video.</li>
+      <li><b>Weekly issue.</b> A ten-page magazine of the week's stories, laid out and rendered automatically for social carousels.</li>
+      <li><b>Narrated pieces.</b> Scripts read by an ElevenLabs voice, cut together with source clips, and finished in DaVinci Resolve through its scripting API.</li>
+    </ul>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">Stack</div>
+      <h2>What it is built with</h2>
+    </div>
+    <dl class="stack-list col">
+      <dt>Core</dt><dd>Python 3, argparse CLI (52 commands in 5 groups, with did-you-mean suggestions), uv, ruff (extra rules and a complexity cap), pytest, GitHub Actions on Linux and Windows</dd>
+      <dt>Media</dt><dd>ffmpeg, WhisperX, OpenCV (YuNet + SFace face recognition), Pillow, Playwright for rendered layouts</dd>
+      <dt>AI</dt><dd>Claude Haiku / Sonnet / Opus, OpenRouter, ElevenLabs, versioned prompt files</dd>
+      <dt>Infra</dt><dd>Docker Compose on a NAS (Debian image, ffmpeg 7.1, Intel Quick Sync), Modal (GPU), Tailscale</dd>
+      <dt>Services</dt><dd>Kitsu (review), discord.py (review bot), YouTube Data and Analytics APIs, X API</dd>
+      <dt>Docs</dt><dd>A 46-page wiki built from the repo on every push, with a test that checks its links. It includes install checklists, a page on how the processes talk to each other, and the model trials. A changelog too.</dd>
+    </dl>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">How it was built</div>
+      <h2>One person, with an AI pair programmer</h2>
+      <p>I designed the system and made the product calls: what gets automated, where a person stays in the loop, what each stage may spend, and how the schedule behaves. I built it with Claude Code as a pair programmer. The project's conventions are written down in the repo, and every pull request gets an automated code review that has to be answered before merge. Copilot reviews first. When its quota runs out, the review falls back to Grok through OpenRouter, for about $1 a PR. I picked Grok after 13 models reviewed the same real PR: three of them made the same false claim about an ffmpeg filter, which a test disproved. Dependabot keeps the dependencies current.</p>
+      <p>About 36,000 lines across 110 modules and some 650 commits in under four weeks, running every day since the first week.</p>
+      <p>Once it was running, I audited the code as if handing it to another team and worked through the findings in tiers:</p>
+      <ul>
+        <li>Broke five import cycles.</li>
+        <li>Split the war room into a package.</li>
+        <li>Moved prompt versions into one registry that the stages, doctor and a test all read.</li>
+        <li>Moved the defaults into a single file.</li>
+        <li>Shipped the prompts inside the package.</li>
+        <li>Added CI on Windows alongside Linux.</li>
+        <li>Added tests where the risk was.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="wrap" style="padding-left:0;padding-right:0">
+    Figures as of 11 November 2026, from the project's own upload, cost and test logs. The source is on <a href="https://github.com/byvfx/clipper">GitHub</a> and the docs are in its <a href="https://github.com/byvfx/clipper/wiki">wiki</a>.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const c = document.getElementById('tl');
+  if (!c) return;
+  function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  // A fixed pseudo-random stream so the picture is the same on every load.
+  let seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  const N = 240, heat = [];
+  for (let i = 0; i < N; i++) heat.push(0.18 + 0.22 * rnd());
+  [[18, .9], [52, .7], [88, 1], [121, .65], [150, .85], [176, .75], [205, .95], [228, .6]].forEach(([at, h]) => {
+    for (let i = -6; i <= 6; i++) { const k = at + i; if (k >= 0 && k < N) heat[k] = Math.max(heat[k], h * Math.exp(-(i * i) / 8)); }
+  });
+  const picks = [18, 52, 88, 150, 205, 121, 176];
+  const segs = [0, 34, 70, 108, 140, 168, 196, 222, 240];
+  function draw() {
+    const r = window.devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+    if (!w || !h) return;
+    c.width = w * r; c.height = h * r;
+    const g = c.getContext('2d'); g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, w, h);
+    const bw = w / N;
+    g.fillStyle = css('--accent');
+    for (let i = 0; i < N; i++) { const bh = heat[i] * (h - 14); g.globalAlpha = 0.35 + 0.65 * heat[i]; g.fillRect(i * bw, h - bh, Math.max(1, bw - 0.6), bh); }
+    g.globalAlpha = 1;
+    g.fillStyle = css('--muted');
+    segs.forEach(s => g.fillRect(s / N * w - 0.5, 0, 1, 8));
+    g.fillStyle = css('--tc');
+    picks.forEach(p => { const x = (p - 2) / N * w; g.fillRect(x, 0, Math.max(3, 4 * bw), h); });
+    g.globalAlpha = 1;
+  }
+  draw();
+  window.addEventListener('resize', draw);
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw); } catch (e) {}
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
+
+</body>
+</html>
