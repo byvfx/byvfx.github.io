@@ -194,10 +194,10 @@ img { max-width: 100%; }
     </div>
 
     <div class="figures">
-      <div class="fig"><b>306</b><span>videos published to YouTube since mid-October: 190 segments, 101 Shorts, 11 compilations</span></div>
+      <div class="fig"><b>347</b><span>videos uploaded to YouTube since mid-October: 218 segments, 114 Shorts, 11 compilations</span></div>
       <div class="fig"><b>~$3.50</b><span>for a full run on an 8-hour stream, transcription included (median of 27 streams)</span></div>
       <div class="fig"><b>2,732 h</b><span>of a video archive transcribed and indexed for full-text search</span></div>
-      <div class="fig"><b>694</b><span>offline tests, run with lint in CI on Linux and Windows on every push</span></div>
+      <div class="fig"><b>736</b><span>offline tests, run with lint in CI on Linux and Windows on every push</span></div>
     </div>
   </header>
 
@@ -299,7 +299,7 @@ img { max-width: 100%; }
         <h3>The war room</h3>
         <p>A web page served by the always-on service, and installable on a phone over Tailscale. It shows what is live and whether it is recording, where each stream is in the pipeline, the review queue and the upload schedule, plus panels for GPU jobs, costs and analytics.</p>
         <p class="why">It also opens the cast library, the news stories and the research dossiers, so all of the tools above have one place to work from.</p>
-        <p class="why">A usability pass made it safe to use quickly: a bulk approve touches only the items on screen (approved items upload on their own), a double tap sends once, and the header turns amber, then red, when its data goes stale.</p>
+        <p class="why">A usability pass made it safe to use quickly: a bulk approve touches only the items on screen (approved items upload on their own), a double tap sends once, Sync and Replan stay greyed out until the work is really done, closing a window with typed edits asks first, and the header turns amber, then red, when its data goes stale.</p>
       </div>
     </div>
 
@@ -435,8 +435,47 @@ img { max-width: 100%; }
     <ul class="plain col">
       <li><b>Archive search.</b> Thousands of hours of a back catalog transcribed in bulk on Modal and indexed with SQLite full-text search, so you can ask questions across years of video.</li>
       <li><b>Weekly issue.</b> A ten-page magazine of the week's stories, laid out and rendered automatically for social carousels.</li>
-      <li><b>Narrated pieces.</b> Scripts read by an ElevenLabs voice, cut together with source clips, and finished in DaVinci Resolve through its scripting API.</li>
+      <li><b>Narrated pieces.</b> Scripts read by an ElevenLabs voice, cut together with source clips, and finished in DaVinci Resolve through its scripting API. The case study below is one of them.</li>
+      <li><b>B-roll library.</b> Free footage for those cuts, found on NASA, DVIDS, the Prelinger Archives and Wikimedia Commons. A clip is kept only when its licence is public domain or CC0 and its credits name no outside owner. Sound is off by default, since agency videos often carry licensed music. For a long film, only the part asked for is downloaded.</li>
     </ul>
+  </section>
+
+  <section class="stack-lg">
+    <div class="stack col">
+      <div class="eyebrow">Case study</div>
+      <h2>An 11-minute documentary, cut by script</h2>
+      <p>The same tools made a short documentary about a person viewers kept asking about, someone with real problems rather than a public figure. Research, edit, sound and the publishing kit were all built in code. The finished cut went through 19 versions, and each one was rebuilt from a plan file and the director's notes on the last.</p>
+    </div>
+
+    <div class="decisions">
+      <div class="dec">
+        <h3>Research with limits</h3>
+        <p>The dossier draws only on what the person posts publicly, plus what had already been said about them on air. Rules set before any writing kept out their name, where they stay, and the people around them, and the script describes what they say and do rather than naming a diagnosis.</p>
+        <p class="why">The script was also rewritten to a neutral, journalistic voice, with every claim attributed to its source.</p>
+      </div>
+      <div class="dec">
+        <h3>An edit built from a plan</h3>
+        <p>DaVinci Resolve is driven through its Python API. A plan file lists every shot, narration line, overlay and fade, and a script lays out the timeline from it. Cover shots cut on the narration's word timings, taken from a local transcription of the voice-over.</p>
+        <p class="why">Clip and narration overlap at every join, with the picture running under the first words and the sound crossfading, so there is no dead air. Before each rebuild, the timeline is compared with the plan, so hand edits made in Resolve aren't lost.</p>
+      </div>
+      <div class="dec">
+        <h3>Sound</h3>
+        <p>The narration is an ElevenLabs clone of the director's own voice. Lines that sit next to each other are voiced in one take and split at word timings, because separate takes sounded different side by side. The score was generated to the exact length of each section and crossfades at section changes, over a CC0 room tone.</p>
+        <p class="why">Every clip was levelled to a common loudness, since the sources ranged from -12 to -31 LUFS. The master is -14 LUFS for YouTube.</p>
+      </div>
+      <div class="dec">
+        <h3>A publishing kit with the cut</h3>
+        <p>The title, description, chapters taken from the plan's section markers, credits, disclosure lines for the AI voice, generated music and public-domain footage, and a pinned comment are all delivered with the final render.</p>
+        <p class="why">A person does the upload and ticks YouTube's altered or synthetic content box by hand.</p>
+      </div>
+    </div>
+
+    <div class="story col">
+      <div class="eyebrow">The check that mattered</div>
+      <h3>Search the render, not the script</h3>
+      <p>The script had been checked, but the final film also contains the person's own clips. Before publishing, the rendered video was transcribed and searched for every detail on the banned list. That found a place name spoken inside one of their clips, at version 18, which no check of the script could have caught.</p>
+      <p>The same search was then run over the channel's older uploads, titles and replies, and it found the name in an earlier clip's title and in a reply, so those could be fixed too.</p>
+    </div>
   </section>
 
   <section class="stack-lg">
@@ -445,12 +484,12 @@ img { max-width: 100%; }
       <h2>What it is built with</h2>
     </div>
     <dl class="stack-list col">
-      <dt>Core</dt><dd>Python 3, argparse CLI (52 commands in 5 groups, with did-you-mean suggestions), uv, ruff (extra rules and a complexity cap), pytest, GitHub Actions on Linux and Windows</dd>
+      <dt>Core</dt><dd>Python 3, argparse CLI (53 commands in 5 groups, with did-you-mean suggestions), uv, ruff (extra rules and a complexity cap), pytest, GitHub Actions on Linux and Windows</dd>
       <dt>Media</dt><dd>ffmpeg, WhisperX, OpenCV (YuNet + SFace face recognition), Pillow, Playwright for rendered layouts</dd>
       <dt>AI</dt><dd>Claude Haiku / Sonnet / Opus, OpenRouter, ElevenLabs, versioned prompt files</dd>
       <dt>Infra</dt><dd>Docker Compose on a NAS (Debian image, ffmpeg 7.1, Intel Quick Sync), Modal (GPU), Tailscale</dd>
       <dt>Services</dt><dd>Kitsu (review), discord.py (review bot), YouTube Data and Analytics APIs, X API</dd>
-      <dt>Docs</dt><dd>A 46-page wiki built from the repo on every push, with a test that checks its links. It includes install checklists, a page on how the processes talk to each other, and the model trials. A changelog too.</dd>
+      <dt>Docs</dt><dd>A 47-page wiki built from the repo on every push, with a test that checks its links. It includes install checklists, a page on how the processes talk to each other, and the model trials. A changelog too.</dd>
     </dl>
   </section>
 
@@ -458,8 +497,8 @@ img { max-width: 100%; }
     <div class="stack col">
       <div class="eyebrow">How it was built</div>
       <h2>One person, with an AI pair programmer</h2>
-      <p>I designed the system and made the product calls: what gets automated, where a person stays in the loop, what each stage may spend, and how the schedule behaves. I built it with Claude Code as a pair programmer. The project's conventions are written down in the repo, and every pull request gets an automated code review that has to be answered before merge. Copilot reviews first. When its quota runs out, the review falls back to Grok through OpenRouter, for about $1 a PR. I picked Grok after 13 models reviewed the same real PR: three of them made the same false claim about an ffmpeg filter, which a test disproved. Dependabot keeps the dependencies current.</p>
-      <p>About 36,000 lines across 110 modules and some 650 commits in under four weeks, running every day since the first week.</p>
+      <p>I designed the system and made the product calls: what gets automated, where a person stays in the loop, what each stage may spend, and how the schedule behaves. I built it with Claude Code as a pair programmer. The project's conventions are written down in the repo, and every pull request that changes code gets two reviews before merge. Claude Code reviews the branch locally and its findings are fixed before the PR opens; then Copilot reviews it on GitHub, and each comment is checked against the code and answered. For a while a third reviewer, Grok through OpenRouter, ran on every PR. I chose it after 13 models reviewed the same real PR, three of which made the same false claim about an ffmpeg filter that a test disproved. It found real bugs but took about 25 minutes a PR, so it is now a by-hand second opinion. Dependabot keeps the dependencies current.</p>
+      <p>About 37,000 lines across 111 modules and some 680 commits in under four weeks, running every day since the first week.</p>
       <p>Once it was running, I audited the code as if handing it to another team and worked through the findings in tiers:</p>
       <ul>
         <li>Broke five import cycles.</li>
@@ -474,7 +513,7 @@ img { max-width: 100%; }
   </section>
 
   <footer class="wrap" style="padding-left:0;padding-right:0">
-    Figures as of 11 November 2026, from the project's own upload, cost and test logs. The source is on <a href="https://github.com/byvfx/clipper">GitHub</a> and the docs are in its <a href="https://github.com/byvfx/clipper/wiki">wiki</a>.
+    Figures as of 13 November 2026, from the project's own upload, cost and test logs. The source is on <a href="https://github.com/byvfx/clipper">GitHub</a> and the docs are in its <a href="https://github.com/byvfx/clipper/wiki">wiki</a>.
   </footer>
 </div>
 
