@@ -443,8 +443,9 @@ img { max-width: 100%; }
   <section class="stack-lg">
     <div class="stack col">
       <div class="eyebrow">Case study</div>
-      <h2>An 11-minute documentary, cut by script</h2>
-      <p>The same tools made a short documentary about a person viewers kept asking about, someone with real problems rather than a public figure. Research, edit, sound and the publishing kit were all built in code. The finished cut went through 19 versions, and each one was rebuilt from a plan file and the director's notes on the last.</p>
+      <h2>An 11-minute documentary, then a command to make the next one</h2>
+      <p>The same tools made a short documentary about a person viewers kept asking about, someone with real problems rather than a public figure. Research, edit, sound and the publishing kit were all built in code. The finished cut went through 19 versions, and each one was rebuilt from a plan and the director's notes on the last.</p>
+      <p>That first film took about 145 one-off Resolve scripts, each patched from the last. The same day it was published, the method became a command, <code>clipper doc</code>, so the next film starts from a plan file instead of a pile of scripts.</p>
     </div>
 
     <div class="decisions">
@@ -462,6 +463,21 @@ img { max-width: 100%; }
         <h3>Sound</h3>
         <p>The narration is an ElevenLabs clone of the director's own voice. Lines that sit next to each other are voiced in one take and split at word timings, because separate takes sounded different side by side. The score was generated to the exact length of each section and crossfades at section changes, over a CC0 room tone.</p>
         <p class="why">Every clip was levelled to a common loudness, since the sources ranged from -12 to -31 LUFS. The master is -14 LUFS for YouTube.</p>
+      </div>
+      <div class="dec">
+        <h3><code>clipper doc</code>: a plan file in, a mastered film out</h3>
+        <p>A hand-written TOML plan lists the sections, title cards, clips and narration lines, with each cover shot cued on a word of its line. The plan is checked when it is read, so a bad cue fails before any narration is paid for. Lines that share a take are voiced in one read and split in the pause before each line. The steps are <code>new</code>, <code>voice</code>, <code>build</code>, <code>master</code> and <code>kit</code>, and each one can be rerun on its own.</p>
+        <p class="why">Word times come from a local Whisper model aligned to the script, rather than searched for in what it heard, so a number read aloud ("800") can't break a cue. 96% of the script's words were matched on a real take.</p>
+      </div>
+      <div class="dec">
+        <h3>Resolve only places; the work happens before it</h3>
+        <p>Loudness for every clip, take, music cue and room tone is worked out before Resolve opens. The Resolve step only places items, sets gains and fades, and reads every one back to check it. The master is a gain and a limiter set 0.8 dB under the peak ceiling, because at the ceiling itself the AAC encode peaked 0.6 dB over.</p>
+        <p class="why">A test run against live Resolve found that a still image ignores the length it is given and always lands at five seconds, pushing everything after it along. Stills are now turned into movie clips of the right length before placing. On that run the render came out at exactly the planned 839 frames, mastered from -16.0 to -14.0 LUFS.</p>
+      </div>
+      <div class="dec">
+        <h3>The leak check, built in</h3>
+        <p><code>master</code> runs the leak check on every render. It transcribes the render on a cloud GPU and searches the transcript and the publishing kit for every banned term. It catches exact matches, words run together or split apart, close misspellings, plurals and hyphenated forms. A known false alarm can be marked so it doesn't fire again.</p>
+        <p class="why">The step that saved the first film is now part of the pipeline, not something to remember.</p>
       </div>
       <div class="dec">
         <h3>A publishing kit with the cut</h3>
@@ -484,7 +500,7 @@ img { max-width: 100%; }
       <h2>What it is built with</h2>
     </div>
     <dl class="stack-list col">
-      <dt>Core</dt><dd>Python 3, argparse CLI (53 commands in 5 groups, with did-you-mean suggestions), uv, ruff (extra rules and a complexity cap), pytest, GitHub Actions on Linux and Windows</dd>
+      <dt>Core</dt><dd>Python 3, argparse CLI (54 commands in 5 groups, with did-you-mean suggestions), uv, ruff (extra rules and a complexity cap), pytest, GitHub Actions on Linux and Windows</dd>
       <dt>Media</dt><dd>ffmpeg, WhisperX, OpenCV (YuNet + SFace face recognition), Pillow, Playwright for rendered layouts</dd>
       <dt>AI</dt><dd>Claude Haiku / Sonnet / Opus, OpenRouter, ElevenLabs, versioned prompt files</dd>
       <dt>Infra</dt><dd>Docker Compose on a NAS (Debian image, ffmpeg 7.1, Intel Quick Sync), Modal (GPU), Tailscale</dd>
