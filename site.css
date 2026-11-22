@@ -1,0 +1,27 @@
+/* Shared tokens + site chrome for the dev portfolio mockups */
+:root{--bg:#161616;--surface:#1c1c1c;--line:#333;--text:#ececec;--muted:#a3a3a3;--amber:#E0A040;
+--s1:4px;--s2:8px;--s3:16px;--s4:24px;--s5:48px;--s6:96px;
+--sans:"IBM Plex Sans",sans-serif;--mono:"IBM Plex Mono",monospace;--gutter:var(--s5)}
+.site-wrap{max-width:1240px;margin:0 auto;padding:0 var(--gutter);box-sizing:border-box}
+.sitenav{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);padding-top:var(--s4);padding-bottom:var(--s4);font-family:var(--sans)}
+.sitenav .brand{font-weight:600;font-size:17px;color:var(--text);text-decoration:none}
+.sitenav nav{display:flex;align-items:center;gap:var(--s2);font:400 13px/1 var(--mono);letter-spacing:.01em}
+.sitenav nav a{color:var(--muted);text-decoration:none;padding:var(--s1) 0;border-bottom:2px solid transparent}
+.sitenav nav a[aria-current]{color:var(--text);border-bottom-color:var(--amber)}
+.sitenav nav a:hover{color:var(--amber)}
+.sitenav .dot{color:#5c5c5c}
+.sitenav .vfx{margin-left:var(--s3);padding:var(--s1) var(--s2) !important;border:1px solid var(--line) !important;color:var(--text) !important}
+a:focus-visible,button:focus-visible,.is-focus{outline:2px solid var(--amber) !important;outline-offset:3px}
+@media (max-width:860px){:root{--gutter:var(--s3)} .sitenav .vfx{margin-left:var(--s2)} .sitenav nav{gap:6px}}
+.sitenav .brand,.sitenav nav a{white-space:nowrap}
+@media (max-width:860px){.sitenav .brand{font-size:15px}}
+footer.site-wrap{width:calc(100% - 2*var(--gutter));max-width:calc(1240px - 2*var(--gutter));padding-left:0 !important;padding-right:0 !important}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

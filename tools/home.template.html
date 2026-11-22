@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brandon Young | Software and pipeline engineering</title>
+<meta name="description" content="AI and pipeline engineer. Image viewers, scene assembly, command-line utilities, and automated pipelines that run unattended.">
+<meta property="og:title" content="Brandon Young | Software and pipeline engineering">
+<meta property="og:description" content="Image viewers, scene assembly, command-line utilities, and automated pipelines that run unattended.">
+<meta property="og:url" content="https://byvfx.github.io/">
+<meta name="twitter:card" content="summary">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23161616'/%3E%3Crect x='6.5' y='6.5' width='19' height='19' fill='none' stroke='%23e3b45f' stroke-width='3' stroke-dasharray='5 3'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="fonts/plex.css">
+<link rel="stylesheet" href="site.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+a{color:inherit;text-decoration-color:#666;text-underline-offset:3px}
+a:hover{color:var(--amber);text-decoration-color:var(--amber)}
+h1,h2,h3,p,ul,ol{margin:0;padding:0} ul,ol{list-style:none}
+.mono{font-family:var(--mono);font-size:13px;letter-spacing:.01em}
+.muted{color:var(--muted)}
+.window{position:relative;margin-top:var(--s3);border:1px dashed #5a5a5a;padding:var(--s6) var(--s6)}
+.coord{position:absolute;font:400 12px/1 var(--mono);color:var(--amber);background:var(--bg);padding:0 var(--s2)}
+.coord.size{right:var(--s3);top:-7px}.coord.origin{left:var(--s3);bottom:-6px}
+.kicker{font:400 13px/1.5 var(--mono);color:var(--muted);margin-bottom:var(--s4)}
+h1{font-size:64px;line-height:1.05;font-weight:500;letter-spacing:-.02em}
+.lede{margin-top:var(--s4);max-width:52ch;font-size:20px;line-height:1.5;color:#cfcfcf}
+.actions{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);margin-top:var(--s5);font-weight:500}
+section{margin-top:var(--s6)}
+.section-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);padding-bottom:var(--s3);border-bottom:1px solid var(--line);margin-bottom:var(--s4)}
+.section-head h2{font-size:22px;line-height:1.3;font-weight:500;letter-spacing:-.01em}
+.tags{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s2)}
+.tags li{font:400 12px/1 var(--mono);color:#cfcfcf;border:1px solid var(--line);padding:var(--s1) var(--s2)}
+.meta{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s2);font:400 12px/1.5 var(--mono);color:var(--muted)}
+.meta a{overflow-wrap:anywhere}
+.meta .sep{color:#5c5c5c}.meta .rel{color:var(--text)}.meta .none{color:var(--muted)}
+.desc{color:#cfcfcf}
+.featured{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:var(--s5);border:1px solid var(--line);background:var(--surface);padding:var(--s5)}
+.featured .label{font:400 12px/1 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.featured h3{font-size:40px;line-height:1.1;font-weight:500;letter-spacing:-.02em;margin-top:var(--s3)}
+.featured h3 a{text-decoration:none}
+.featured .desc{margin-top:var(--s3);font-size:18px;line-height:1.55}
+.featured .tags{margin-top:var(--s4)}
+.featured .meta{margin-top:var(--s3)}
+.featured .cta{display:inline-block;margin-top:var(--s4);font-weight:500}
+.viz{display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.tl{border:1px solid var(--line);background:var(--bg);padding:var(--s3)}
+.tl-head{display:flex;justify-content:space-between;gap:var(--s2);font:400 12px/1.4 var(--mono);color:var(--muted);margin-bottom:var(--s2)}
+.tl canvas{display:block;width:100%;height:72px;max-width:100%}
+.tl-ticks{display:flex;justify-content:space-between;gap:var(--s2);font:400 12px/1 var(--mono);color:var(--muted);margin-top:var(--s2)}
+.stages{display:flex;flex-wrap:wrap;gap:var(--s1);counter-reset:st}
+.stages li{counter-increment:st;font:400 12px/1 var(--mono);color:#cfcfcf;border:1px solid var(--line);padding:var(--s2)}
+.stages li::before{content:counter(st,decimal-leading-zero) " ";color:var(--muted)}
+.stages li.human{border-color:#8a8a8a;color:var(--text)}
+.viz .note{font:400 12px/1.5 var(--mono);color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s4)}
+.proj{border:1px solid var(--line);padding:var(--s4);display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.proj h3{font-size:20px;line-height:1.3;font-weight:500}
+.proj h3 a{text-decoration:none}
+.proj .meta{margin-top:auto;padding-top:var(--s2)}
+.rows{border-bottom:1px solid var(--line)}
+.rows > li{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,6fr) minmax(0,3fr);gap:var(--s2) var(--s5);align-items:start;padding:var(--s4) 0;border-top:1px solid var(--line)}
+.rows h3{font-size:17px;font-weight:500;line-height:1.4;margin-bottom:var(--s2)}
+.rows .meta{justify-content:flex-end;text-align:right}
+.groups{display:grid;gap:var(--s5)}
+.group-label{font:400 12px/1 var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--s3)}
+.about{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:var(--s3) var(--s5)}
+.statement{font-size:24px;line-height:1.45;max-width:30ch}
+.links{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);margin-top:var(--s4);font-weight:500}
+footer.site-wrap{margin-top:var(--s6);padding-top:var(--s3);padding-bottom:var(--s5);color:var(--muted);border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:var(--s3)}
+@media (max-width:860px){
+ section{margin-top:var(--s5)}
+ .window{padding:var(--s5) var(--s3)}
+ h1{font-size:40px}
+ .lede{font-size:18px}
+ .actions{margin-top:var(--s4)}
+ .featured{grid-template-columns:minmax(0,1fr);padding:var(--s4);gap:var(--s4)}
+ .featured h3{font-size:32px}
+ .grid{grid-template-columns:minmax(0,1fr)}
+ .rows > li,.about{grid-template-columns:minmax(0,1fr)}
+ .rows .meta{justify-content:flex-start;text-align:left}
+ .statement{font-size:20px}
+ .section-head h2{font-size:20px}
+ .tl-head{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<header class="site-wrap sitenav">
+  <a class="brand" href="/">Brandon Young</a>
+  <nav aria-label="Primary">
+    <a href="/#work" aria-current="page">Work</a><span class="dot" aria-hidden="true">·</span>
+    <a href="/#about">About</a><span class="dot" aria-hidden="true">·</span>
+    <a href="https://github.com/byvfx">GitHub</a>
+    <a class="vfx" href="https://byvfx.com" title="VFX work at byvfx.com">VFX ↗</a>
+  </nav>
+</header>
+<main class="site-wrap">
+  <div class="window">
+    <span class="coord size" aria-hidden="true">1920,1080</span>
+    <p class="kicker">AI and pipeline engineer — agents, evals, and media pipelines in Python and Rust.</p>
+    <h1>Brandon Young</h1>
+    <p class="lede">Image viewers, scene assembly, command-line utilities, and automated pipelines that run unattended.</p>
+    <p class="actions"><a href="#work">See the work</a><a href="https://github.com/byvfx">GitHub</a><a href="mailto:brandon@byvfx.com">Email</a><a href="https://www.linkedin.com/in/brandoncyoung">LinkedIn</a></p>
+    <span class="coord origin" aria-hidden="true">0,0</span>
+  </div>
+
+  <section id="work" aria-labelledby="work-h">
+    <div class="section-head"><h2 id="work-h">Featured case study</h2><span class="mono muted">byvfx.github.io/clippa</span></div>
+    <article class="featured">
+      <div>
+        <p class="label">Case study · media automation · 2026</p>
+        <h3><a href="/clippa/">Clippa</a></h3>
+        <p class="desc">{{FEAT_DESC}}</p>
+        {{FEAT_TAGS}}
+        {{FEAT_META}}
+        <a class="cta" href="/clippa/">Read the case study →</a>
+      </div>
+      <div class="viz" aria-hidden="true">
+        <div class="tl">
+          <div class="tl-head"><span>One stream, 8 h of video</span><span>heat · picks</span></div>
+          <canvas id="tl"></canvas>
+          <div class="tl-ticks"><span>00:00:00</span><span>04:00:00</span><span>08:00:00</span></div>
+        </div>
+        <ol class="stages">{{STAGES}}</ol>
+        <p class="note">Thirteen stages, each one command. Nothing goes out until a person says so.</p>
+      </div>
+    </article>
+  </section>
+
+  <section aria-labelledby="sel-h">
+    <div class="section-head"><h2 id="sel-h">Selected projects</h2><span class="mono muted">github.com/byvfx</span></div>
+    <div class="grid">{{SELECTED}}</div>
+  </section>
+
+  <section aria-labelledby="more-h">
+    <div class="section-head"><h2 id="more-h">More tools</h2></div>
+    <div class="groups">
+      <div><p class="group-label">Pipeline tools</p><ul class="rows">{{PIPELINE}}</ul></div>
+      <div><p class="group-label">Graphics studies</p><ul class="rows">{{STUDIES}}</ul></div>
+    </div>
+  </section>
+
+  <section id="about" class="about" aria-labelledby="about-h">
+    <h2 id="about-h" class="mono muted" style="font-weight:400;font-size:13px">About</h2>
+    <div>
+      <p class="statement">My focus is on tools that are simple to deploy, clear about their failures, and reliable in daily use.</p>
+      <p class="links"><a href="mailto:brandon@byvfx.com">brandon@byvfx.com</a><a href="https://github.com/byvfx">GitHub</a><a href="https://www.linkedin.com/in/brandoncyoung">LinkedIn</a><a href="https://byvfx.com">VFX work at byvfx.com ↗</a></p>
+    </div>
+  </section>
+</main>
+<footer class="site-wrap mono"><span>Brandon Young</span><span>byvfx.github.io</span></footer>
+<script>
+(function(){
+  const c=document.getElementById('tl');
+  if(!c) return;
+  let seed=7;
+  const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  const N=240,heat=[];
+  for(let i=0;i<N;i++) heat.push(.18+.22*rnd());
+  [[18,.9],[52,.7],[88,1],[121,.65],[150,.85],[176,.75],[205,.95],[228,.6]].forEach(([a,h])=>{
+    for(let i=-6;i<=6;i++){const k=a+i;if(k>=0&&k<N) heat[k]=Math.max(heat[k],h*Math.exp(-(i*i)/8))}
+  });
+  const picks=[18,52,88,150,205,121,176];
+  function draw(){
+    const r=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
+    if(!w||!h) return;
+    c.width=w*r;c.height=h*r;
+    const g=c.getContext('2d');
+    g.setTransform(r,0,0,r,0,0);
+    const bw=w/N;
+    for(let i=0;i<N;i++){
+      const bh=heat[i]*(h-8);
+      g.fillStyle='#8c8c8c';
+      g.globalAlpha=.3+.6*heat[i];
+      g.fillRect(i*bw,h-bh,Math.max(1,bw-.6),bh);
+    }
+    g.globalAlpha=1;
+    g.fillStyle='#E0A040';
+    picks.forEach(p=>g.fillRect((p-2)/N*w,0,Math.max(3,4*bw),h));
+  }
+  draw();
+  addEventListener('resize', draw);
+})();
+</script>
+</body>
+</html>
