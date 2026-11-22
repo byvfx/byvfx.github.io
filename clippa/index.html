@@ -12,9 +12,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23161616'/%3E%3Crect x='6.5' y='6.5' width='19' height='19' fill='none' stroke='%23e3b45f' stroke-width='3' stroke-dasharray='5 3'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../fonts/plex.css">
+<link rel="stylesheet" href="../site.css">
 <style>
 /* Layout: a single reading column (~70ch) with full-width bands for the timeline hero,
    the pipeline and the architecture map. Timecode amber marks anything measured in time. */
@@ -165,14 +164,23 @@ img { max-width: 100%; }
 .topnav a:hover { color: var(--accent); }
 .topnav span { display: flex; gap: 20px; }
 </style>
+<link rel="stylesheet" href="restyle.css">
 </head>
 <body>
 
-<nav class="wrap topnav" aria-label="Site">
-  <a href="/">Brandon Young</a>
+<header class="site-wrap sitenav">
+  <a class="brand" href="/">Brandon Young</a>
+  <nav aria-label="Primary">
+    <a href="/#work" aria-current="page">Work</a><span class="dot" aria-hidden="true">·</span>
+    <a href="/#about">About</a><span class="dot" aria-hidden="true">·</span>
+    <a href="https://github.com/byvfx">GitHub</a>
+    <a class="vfx" href="https://byvfx.com" title="VFX work at byvfx.com">VFX ↗</a>
+  </nav>
+</header>
+<nav class="site-wrap crumbs" aria-label="Project">
+  <span><a href="/#work">Work</a> <span aria-hidden="true">/</span> Clippa</span>
   <span><a href="https://github.com/byvfx/clipper">GitHub</a><a href="https://github.com/byvfx/clipper/wiki">Docs</a></span>
 </nav>
-
 <div class="wrap">
   <header class="stack-lg">
     <div class="stack">
@@ -581,5 +589,9 @@ img { max-width: 100%; }
 })();
 </script>
 
+<nav class="site-wrap prevnext" aria-label="More projects">
+  <a href="/#work"><span class="k">← Back to</span><span class="n">All work</span></a>
+  <a href="https://github.com/byvfx/bif" class="next"><span class="k">Next project →</span><span class="n">BIF</span></a>
+</nav>
 </body>
 </html>
